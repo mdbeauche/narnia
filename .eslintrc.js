@@ -5,7 +5,7 @@ module.exports = {
       configFile: './babel.config.json',
     },
   },
-  extends: ['airbnb', 'prettier'],
+  extends: ['airbnb-base', 'prettier'],
   globals: { fetch: false },
   plugins: ['prettier'],
   settings: {
