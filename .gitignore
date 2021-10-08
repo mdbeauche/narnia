@@ -1,0 +1,9 @@
+*.code-workspace
+
+node_modules/
+
+.npm
+
+.eslintcache
+
+*.config.json
