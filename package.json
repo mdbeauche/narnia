@@ -5,8 +5,13 @@
   "main": "src/index.js",
   "dependencies": {
     "babel-eslint": "^10.1.0",
+    "cors": "^2.8.5",
     "express": "^4.17.1",
-    "mysql2": "^2.3.0"
+    "helmet": "^4.6.0",
+    "mysql-validator": "^0.1.6",
+    "mysql2": "^2.3.0",
+    "response-time": "^2.3.2",
+    "timeout-middleware": "^0.6.1"
   },
   "devDependencies": {
     "@babel/core": "^7.15.8",
@@ -24,6 +29,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon src/server.js",
+    "sql": "sudo /etc/init.d/mysql start",
     "format": "prettier --write \"**/*.+(js|jsx|json|css|md)\"",
     "lint": "eslint src/*.js --fix",
     "lint:fix": "eslint --fix --ext .js,.jsx src"
