@@ -49,8 +49,14 @@ jobs:
       # Run Linter against code base #
       ################################
       - name: Lint Code Base
-        uses: docker://github/super-linter:v3.3.0
+        uses: github/super-linter@v4
         env:
+          # list of file types to validate (everything else ignored)
+          VALIDATE_JAVASCRIPT_ES: true
+          VALIDATE_JSX: true
+          VALIDATE_CSS: true
+          # path to lint config files
+          LINTER_RULES_PATH: /
           # eslint config file location
           JAVASCRIPT_ES_CONFIG_FILE: .eslintrc.js
           # use prettier JS style
