@@ -53,6 +53,6 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          JAVASCRIPT_ES_CONFIG_FILE: .eslintrc.js # eslint config file location
+          JAVASCRIPT_ES_CONFIG_FILE: /github/workspace///.eslintrc.js # eslint config file location
           JAVASCRIPT_DEFAULT_STYLE: standard/prettier # use prettier JS style
           FILTER_REGEX_INCLUDE: .*src/.* # lint only src folder
