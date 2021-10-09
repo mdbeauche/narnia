@@ -28,6 +28,7 @@ module.exports = {
         devDependencies: true,
         optionalDependencies: false,
         peerDependencies: false,
+        packageDir: __dirname,
       },
     ],
     'function-paren-newline': 0,
