@@ -13,17 +13,6 @@ module.exports = {
   extends: ['airbnb-base', 'prettier'],
   globals: { fetch: false },
   plugins: ['prettier'],
-  settings: {
-    'import/resolver': {
-      node: {
-        extensions: ['.js', '.jsx', '.ts', '.tsx'],
-        moduleDirectory: ['./node_modules', './src'],
-      },
-      alias: {
-        map: [['src', './src']],
-      },
-    },
-  },
   rules: {
     'no-console': 'off',
     'max-len': [2, 100, 2],
