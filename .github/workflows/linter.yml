@@ -49,7 +49,7 @@ jobs:
       # Run Linter against code base #
       ################################
       - name: Lint Code Base
-        uses: github/super-linter@v4
+        uses: github/super-linter@v3
         env:
           # list of file types to validate (everything else ignored)
           VALIDATE_JAVASCRIPT_ES: true

@@ -1,0 +1,53 @@
+{
+  "name": "narnia",
+  "version": "0.0.1",
+  "description": "back-end",
+  "main": "src/index.js",
+  "dependencies": {
+    "babel-eslint": "^10.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "express-async-handler": "^1.1.4",
+    "fs": "0.0.1-security",
+    "helmet": "^4.6.0",
+    "moment": "^2.29.1",
+    "mysql-validator": "^0.1.6",
+    "mysql2": "^2.3.0",
+    "response-time": "^2.3.2",
+    "timeout-middleware": "^0.6.1",
+    "winston": "^3.3.3",
+    "winston-daily-rotate-file": "^4.5.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.15.8",
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-import-resolver-alias": "^1.1.2",
+    "eslint-plugin-import": "^2.24.2",
+    "eslint-plugin-prettier": "^4.0.0",
+    "husky": "^7.0.0",
+    "lint-staged": "^11.2.0",
+    "nodemon": "^2.0.13",
+    "prettier": "^2.4.1",
+    "pretty-quick": "^3.1.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon --use-strict src/index.js",
+    "sql": "sudo /etc/init.d/mysql start",
+    "format": "prettier --write \"**/*.+(js|jsx|json|css|md)\"",
+    "lint": "eslint src/*.js --fix",
+    "lint:fix": "eslint --fix --ext .js,.jsx src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mdbeauche/narnia.git"
+  },
+  "author": "Michael Beauchemin",
+  "bugs": {
+    "url": "https://github.com/mdbeauche/narnia/issues"
+  },
+  "homepage": "https://github.com/mdbeauche/narnia#readme"
+}

@@ -1,0 +1,7 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "Formatting staged files with ESLint"
+npx eslint src/*.js --cache --fix
+echo "Formatting staged files with Prettier"
+npx pretty-quick --pattern "**/*.*(js|jsx)" --staged

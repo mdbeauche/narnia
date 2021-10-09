@@ -1,5 +1,10 @@
 module.exports = {
   parser: 'babel-eslint',
+  env: {
+    browser: true,
+    node: true,
+    jest: false,
+  },
   parserOptions: {
     babelOptions: {
       configFile: './babel.config.json',
@@ -12,10 +17,7 @@ module.exports = {
     'import/resolver': {
       node: {
         extensions: ['.js', '.jsx', '.ts', '.tsx'],
-        moduleDirectory: ['node_modules', 'src/'],
-      },
-      alias: {
-        map: [['src', './src']],
+        moduleDirectory: ['./node_modules', './src'],
       },
     },
   },
@@ -25,9 +27,10 @@ module.exports = {
     'import/no-extraneous-dependencies': [
       'error',
       {
-        devDependencies: true,
+        devDependencies: false,
         optionalDependencies: false,
         peerDependencies: false,
+        packageDir: __dirname,
       },
     ],
     'function-paren-newline': 0,
