@@ -8,7 +8,7 @@ usersRouter.route('/').get(routeHandler(users.getUsers));
 
 usersRouter.route('/:user_id').get(routeHandler(users.getUser));
 
-usersRouter.route('/:user_id/create').get(routeHandler(users.createUser));
+usersRouter.route('/create').get(routeHandler(users.createUser));
 
 usersRouter.route('/:user_id/update').post(routeHandler(users.updateUser));
 

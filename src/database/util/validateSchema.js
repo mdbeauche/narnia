@@ -1,4 +1,5 @@
 const validator = require('mysql-validator');
+const logger = require('../../util/logger');
 
 let typeDescription;
 
@@ -19,8 +20,8 @@ async function validateSchema(db, record, table) {
     rows.forEach((row) => {
       // only look at fields that don't have a default value
       // and aren't the primary key
-      if (row['Default'] === null && row['Key'] !== 'PRI') {
-        typeDescription[row['Field']] = row['Type'];
+      if (row.Default === null && row.Key !== 'PRI') {
+        typeDescription[row.Field] = row.Type;
       }
     });
   }

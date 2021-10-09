@@ -11,6 +11,7 @@
     "express-async-handler": "^1.1.4",
     "fs": "0.0.1-security",
     "helmet": "^4.6.0",
+    "moment": "^2.29.1",
     "mysql-validator": "^0.1.6",
     "mysql2": "^2.3.0",
     "response-time": "^2.3.2",

@@ -3,14 +3,13 @@ const logger = require('./logger');
 
 // combine all params associated with express req object
 const combineReqParams = (req) => {
-  const params = Object.assign(
-    {},
-    req.query,
-    req.body,
-    req.params,
-    req.file,
-    req.files,
-  );
+  const params = {
+    ...req.query,
+    ...req.body,
+    ...req.params,
+    ...req.file,
+    ...req.files,
+  };
 
   return params;
 };

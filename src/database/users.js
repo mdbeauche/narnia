@@ -1,7 +1,4 @@
-const validator = require('mysql-validator');
 const validateSchema = require('./util/validateSchema');
-
-let typeDescription;
 
 async function validateUser(db, user) {
   const validationErrors = await validateSchema(db, user, 'users');
@@ -19,9 +16,9 @@ async function getUsers(db) {
 
   if (rows && rows.length) {
     return rows;
-  } else {
-    return 'No users table found';
   }
+
+  return 'No users table found';
 }
 
 async function getUser(db, params) {
@@ -36,9 +33,9 @@ async function getUser(db, params) {
 
   if (rows && rows.length) {
     return rows;
-  } else {
-    return `No user found by id ${params.user_id}`;
   }
+
+  return `No user found by id ${params.user_id}`;
 }
 
 async function createUser(db, params) {
@@ -49,7 +46,7 @@ async function createUser(db, params) {
     email: 'michael.beauchemin@gmail.com',
   };
 
-  const validationErrors = await users.validateUser(db, testUser);
+  const validationErrors = await validateUser(db, testUser);
 
   if (validationErrors.length > 0) {
     return `Failed to validate user: ${validationErrors}`;

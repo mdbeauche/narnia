@@ -63,7 +63,7 @@ process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
-app.start = async function () {
+app.start = async () => {
   try {
     database = await mysql.createConnection({
       host: DB_HOST,
@@ -85,7 +85,7 @@ app.start = async function () {
   }
 };
 
-app.stop = async function () {
+app.stop = async () => {
   shutdown();
 };
 
