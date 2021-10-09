@@ -28,7 +28,11 @@ module.exports = (modelFn) =>
       return res.json(results);
     } catch (error) {
       logger.error(
-        `Route error at '${req.path}': ${error} (params: ${params})`,
+        `Route error at '${req.path}': ${error} (params: ${JSON.stringify(
+          params,
+          null,
+          2,
+        )})`,
       );
 
       return res.json(error);

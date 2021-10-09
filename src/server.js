@@ -4,7 +4,7 @@ const mysql = require('mysql2/promise');
 const { PROJECT_NAME, PORT, DB_NAME, DB_HOST, DB_USER } = require('./config');
 const { version } = require('../package.json');
 const middleware = require('./util/middleware');
-const usersRouter = require('./routers/users');
+const { usersRouter, initializeUsers } = require('./routers/users');
 const logger = require('./util/logger');
 require('dotenv').config();
 
@@ -72,6 +72,9 @@ app.start = async () => {
       database: DB_NAME,
     });
     app.db = database;
+
+    // need to initialize each table's schema after database is connected
+    await initializeUsers(database);
 
     logger.log(`Connected to database as id ${database.threadId}`);
 
