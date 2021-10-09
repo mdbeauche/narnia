@@ -6,12 +6,17 @@
   "dependencies": {
     "babel-eslint": "^10.1.0",
     "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
     "express": "^4.17.1",
+    "express-async-handler": "^1.1.4",
+    "fs": "0.0.1-security",
     "helmet": "^4.6.0",
     "mysql-validator": "^0.1.6",
     "mysql2": "^2.3.0",
     "response-time": "^2.3.2",
-    "timeout-middleware": "^0.6.1"
+    "timeout-middleware": "^0.6.1",
+    "winston": "^3.3.3",
+    "winston-daily-rotate-file": "^4.5.5"
   },
   "devDependencies": {
     "@babel/core": "^7.15.8",
@@ -28,7 +33,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon src/server.js",
+    "start": "nodemon src/index.js",
     "sql": "sudo /etc/init.d/mysql start",
     "format": "prettier --write \"**/*.+(js|jsx|json|css|md)\"",
     "lint": "eslint src/*.js --fix",

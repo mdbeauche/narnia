@@ -1,5 +1,9 @@
 *.code-workspace
 
+.env
+
+logs/
+
 node_modules/
 
 .npm

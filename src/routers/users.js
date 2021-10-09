@@ -1,53 +1,17 @@
+const express = require('express');
+const routeHandler = require('../util/routeHandler');
 const { users } = require('../database');
 
-const usersRouter = require('express').Router({ mergeParams: true });
+const usersRouter = express.Router({ mergeParams: true });
 
-let database;
+usersRouter.route('/').get(routeHandler(users.getUsers));
 
-usersRouter
-  .route('/')
-  .get((req, res) => {
-    database.query('SELECT * FROM users', (error, results, fields) => {
-      if (error) throw error;
+usersRouter.route('/:user_id').get(routeHandler(users.getUser));
 
-      console.log('GET users: ', results);
-      res.send(`GET users: ${results}`);
-    });
-  })
-  .post((req, res) => {});
-usersRouter
-  .route('/:user_id')
-  .get((req, res) => {
-    res.send(`GET user ${user_id}`);
-  })
-  .post((req, res) => {});
-usersRouter
-  .route('/:user_id/create')
-  .get((req, res) => {
-    res.send(`GET create user ${user_id}`);
-  })
-  .post((req, res) => {
-    users.validateUser();
-  });
-usersRouter
-  .route('/:user_id/update')
-  .get((req, res) => {
-    res.send(`GET update user${user_id}`);
-  })
-  .post((req, res) => {
-    users.updateUser();
-  });
-usersRouter
-  .route('/:user_id/delete')
-  .get((req, res) => {
-    res.send(`GET delete user ${user_id}`);
-  })
-  .post((req, res) => {
-    users.deleteUser();
-  });
+usersRouter.route('/:user_id/create').get(routeHandler(users.createUser));
 
-module.exports = (db) => {
-  database = db;
+usersRouter.route('/:user_id/update').post(routeHandler(users.updateUser));
 
-  return usersRouter;
-};
+usersRouter.route('/:user_id/delete').post(routeHandler(users.deleteUser));
+
+module.exports = usersRouter;
