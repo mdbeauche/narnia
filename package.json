@@ -1,6 +1,7 @@
 {
   "name": "narnia",
   "version": "0.0.1",
+  "private": true,
   "description": "back-end",
   "main": "src/index.js",
   "dependencies": {

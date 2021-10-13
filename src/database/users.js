@@ -34,9 +34,7 @@ async function getUsers(db) {
 async function getUser(db, params) {
   let rows;
   try {
-    [rows] = await db.execute('SELECT * FROM users WHERE user_id = ?', [
-      params.user_id,
-    ]);
+    [rows] = await db.execute('SELECT * FROM users WHERE id = ?', [params.id]);
   } catch (err) {
     return `getUser failed: ${err.message}`;
   }
@@ -45,7 +43,7 @@ async function getUser(db, params) {
     return rows;
   }
 
-  return `No user found by id ${params.user_id}`;
+  return `No user found by id ${params.id}`;
 }
 
 async function createUser(db, params) {
@@ -79,7 +77,7 @@ async function createUser(db, params) {
   }
 
   if (rows.affectedRows && rows.affectedRows > 0) {
-    return `Created user with user_id: ${rows.insertId}`;
+    return `Created user with id: ${rows.insertId}`;
   }
 
   return 'Failed to create user';
@@ -88,18 +86,18 @@ async function createUser(db, params) {
 async function deleteUser(db, params) {
   let rows;
   try {
-    [rows] = await db.execute('DELETE FROM users WHERE user_id = ?;', [
-      params.user_id,
-    ]);
+    [rows] = await db.execute('DELETE FROM users WHERE id = ?;', [params.id]);
   } catch (err) {
     return `deleteUser failed: ${err.message}`;
   }
 
-  if (rows && rows.length) {
-    return rows;
+  if (rows?.affectedRows > 0) {
+    return `Deleted ${rows.affectedRows} record${
+      rows.affectedRows > 1 ? 's' : ''
+    } with id: ${params.id}`;
   }
 
-  return `Unable to delete user with id ${params.user_id}`;
+  return `Unable to delete user with id ${params.id}`;
 }
 
 async function updateUser(db, params) {
@@ -129,8 +127,8 @@ async function updateUser(db, params) {
 
   try {
     [rows] = await db.execute(
-      `UPDATE users SET ${updateString} WHERE user_id = ?;`,
-      [...values, params.user_id],
+      `UPDATE users SET ${updateString} WHERE id = ?;`,
+      [...values, params.id],
     );
   } catch (err) {
     return `updateUser failed: ${err.message}`;
@@ -140,7 +138,7 @@ async function updateUser(db, params) {
     return rows;
   }
 
-  return `Unable to update user with id ${params.user_id}`;
+  return `Unable to update user with id ${params.id}`;
 }
 
 module.exports = {

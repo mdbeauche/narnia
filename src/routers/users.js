@@ -13,10 +13,10 @@ usersRouter.route('/').get(routeHandler(users.getUsers));
 
 usersRouter.route('/create').get(routeHandler(users.createUser));
 
-usersRouter.route('/:user_id').get(routeHandler(users.getUser));
+usersRouter.route('/:id').get(routeHandler(users.getUser));
 
-usersRouter.route('/:user_id/update').get(routeHandler(users.updateUser));
+usersRouter.route('/:id/update').post(routeHandler(users.updateUser));
 
-usersRouter.route('/:user_id/delete').post(routeHandler(users.deleteUser));
+usersRouter.route('/:id/delete').post(routeHandler(users.deleteUser));
 
 module.exports = { usersRouter, initializeUsers };
