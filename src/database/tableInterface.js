@@ -1,0 +1,226 @@
+const {
+  initializeSchema,
+  validateSchema,
+  validateUpdates,
+} = require('./util/schema');
+
+module.exports = class TableInterface {
+  constructor(name) {
+    this.name = name || '';
+
+    this.routes = [
+      {
+        path: '/',
+        function: 'getRecords',
+        method: 'GET',
+      },
+      {
+        path: '/schema',
+        function: 'getSchema',
+        method: 'GET',
+      },
+      {
+        path: '/create',
+        function: 'createRecord',
+        method: 'POST',
+      },
+      {
+        path: '/:id',
+        function: 'getRecord',
+        method: 'GET',
+      },
+      {
+        path: '/:id/update',
+        function: 'updateRecord',
+        method: 'POST',
+      },
+      {
+        path: '/:id/delete',
+        function: 'deleteRecord',
+        method: 'POST',
+      },
+    ];
+
+    this.initialize = this.initialize.bind(this);
+    this.getSchema = this.getSchema.bind(this);
+    this.validateRecord = this.validateRecord.bind(this);
+    this.getRecords = this.getRecords.bind(this);
+    this.getRecord = this.getRecord.bind(this);
+    this.createRecord = this.createRecord.bind(this);
+    this.updateRecord = this.updateRecord.bind(this);
+    this.deleteRecord = this.deleteRecord.bind(this);
+  }
+
+  async initialize(db) {
+    this.schema = await initializeSchema(db, this.name);
+  }
+
+  async getSchema() {
+    if (this.schema) {
+      return { success: true, data: [this.schema] };
+    }
+
+    return { success: false, message: 'Table interface not initialized' };
+  }
+
+  async validateRecord(db, record) {
+    const validationErrors = await validateSchema(
+      db,
+      record,
+      this.name,
+      this.schema,
+    );
+
+    return validationErrors;
+  }
+
+  async getRecords(db) {
+    let rows;
+
+    try {
+      [rows] = await db.execute(`SELECT * FROM ${this.name}`);
+    } catch (err) {
+      return { success: false, message: `getRecords failed: ${err.message}` };
+    }
+
+    if (rows && rows.length) {
+      return { success: true, data: rows };
+    }
+
+    return { success: false, message: `No ${this.name} table found` };
+  }
+
+  async getRecord(db, params) {
+    let rows;
+    try {
+      [rows] = await db.execute(`SELECT * FROM ${this.name} WHERE id = ?`, [
+        params.id,
+      ]);
+    } catch (err) {
+      return { success: false, message: `getRecord failed: ${err.message}` };
+    }
+
+    if (rows && rows.length) {
+      return { success: true, data: rows };
+    }
+
+    return { success: false, message: `No record found by id ${params.id}` };
+  }
+
+  async createRecord(db, params) {
+    // testing
+    // const testUser = {
+    //   password: 'testpass',
+    //   first_name: 'Michael',
+    //   last_name: 'Beauchemin',
+    //   email: 'michael.beauchemin@gmail.com',
+    // };
+
+    const validationErrors = await this.validateRecord(db, params.record);
+
+    if (validationErrors.length > 0) {
+      return {
+        success: false,
+        message: `Failed to validate record: ${validationErrors}`,
+      };
+    }
+
+    const fields = `${Object.keys(params.record).join(', ')}`;
+    const values = `${Object.keys(params.record)
+      .map(() => '?')
+      .join(', ')}`;
+
+    let rows;
+    try {
+      [rows] = await db.execute(
+        // `INSERT INTO ${this.name} ( first_name, last_name, email, password )'
+        // + ' VALUES ( ?, ?, ?, ? );`,
+        `INSERT INTO ${this.name} ( ${fields} ) VALUES ( ${values} );`,
+        Object.values(params.record),
+      );
+    } catch (err) {
+      return { success: false, message: `createRecord failed: ${err.message}` };
+    }
+
+    if (rows?.affectedRows && rows.affectedRows > 0) {
+      return {
+        success: true,
+        message: `Created record with id: ${rows.insertId}`,
+      };
+    }
+
+    return { success: false, message: 'Failed to create record' };
+  }
+
+  async deleteRecord(db, params) {
+    let rows;
+    try {
+      [rows] = await db.execute(`DELETE FROM ${this.name} WHERE id = ?;`, [
+        params.id,
+      ]);
+    } catch (err) {
+      return { success: false, message: `deleteRecord failed: ${err.message}` };
+    }
+
+    if (rows?.affectedRows > 0) {
+      return {
+        success: true,
+        message: `Deleted ${rows.affectedRows} record${
+          rows.affectedRows > 1 ? 's' : ''
+        } with id: ${params.id}`,
+      };
+    }
+
+    return {
+      success: false,
+      message: `Unable to delete record with id ${params.id}`,
+    };
+  }
+
+  async updateRecord(db, params) {
+    // testing
+    // params.updates = [
+    //   { field: 'first_name', value: 'zombified' },
+    //   { field: 'last_name', value: 'grumpy' },
+    // ];
+
+    const validationErrors = await validateUpdates(this.schema, params.updates);
+
+    if (validationErrors.length > 0) {
+      return {
+        success: false,
+        message: `Unable to update record due to ${validationErrors}`,
+      };
+    }
+
+    // need to create string of form field1 = value1, field2 = value2
+    // difficulty: default escaping only occurs on values, not fields
+    let updateString = params.updates.reduce(
+      (prev, curr) => `${prev}${curr.field} = ?, `,
+      '',
+    );
+    // remove trailing comma
+    updateString = updateString.slice(0, -2);
+    const values = params.updates.map((update) => update.value);
+
+    let rows;
+
+    try {
+      [rows] = await db.execute(
+        `UPDATE ${this.name} SET ${updateString} WHERE id = ?;`,
+        [...values, params.id],
+      );
+    } catch (err) {
+      return { success: false, message: `updateRecord failed: ${err.message}` };
+    }
+
+    if (rows && rows.affectedRows > 0) {
+      return { success: true, data: rows };
+    }
+
+    return {
+      success: false,
+      message: `Unable to update record with id ${params.id}`,
+    };
+  }
+};

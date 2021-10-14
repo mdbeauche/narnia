@@ -1,3 +1,29 @@
+// *** ARCHIVED ***
+// previous usage:
+/*
+
+// initialize schema from db
+async function initializeUsers(database) {
+  users.initialize(database);
+}
+
+const usersRouter = express.Router({ mergeParams: true });
+
+usersRouter.route('/').get(routeHandler(users.getUsers));
+
+usersRouter.route('/create').get(routeHandler(users.createUser));
+
+usersRouter.route('/:id').get(routeHandler(users.getUser));
+
+usersRouter.route('/:id/update').post(routeHandler(users.updateUser));
+
+usersRouter.route('/:id/delete').post(routeHandler(users.deleteUser));
+
+module.exports = { usersRouter, initializeUsers };
+
+*/
+// *** ARCHIVED ***
+
 const {
   initializeSchema,
   validateSchema,
@@ -21,14 +47,14 @@ async function getUsers(db) {
   try {
     [rows] = await db.execute('SELECT * FROM users');
   } catch (err) {
-    return `getUsers failed: ${err.message}`;
+    return { success: false, message: `getUsers failed: ${err.message}` };
   }
 
   if (rows && rows.length) {
-    return rows;
+    return { success: true, data: rows };
   }
 
-  return 'No users table found';
+  return { success: false, message: 'No users table found' };
 }
 
 async function getUser(db, params) {
@@ -36,14 +62,14 @@ async function getUser(db, params) {
   try {
     [rows] = await db.execute('SELECT * FROM users WHERE id = ?', [params.id]);
   } catch (err) {
-    return `getUser failed: ${err.message}`;
+    return { success: false, message: `getUser failed: ${err.message}` };
   }
 
   if (rows && rows.length) {
-    return rows;
+    return { success: true, data: rows };
   }
 
-  return `No user found by id ${params.id}`;
+  return { success: false, message: `No user found by id ${params.id}` };
 }
 
 async function createUser(db, params) {
@@ -58,7 +84,10 @@ async function createUser(db, params) {
   const validationErrors = await validateUser(db, params.user);
 
   if (validationErrors.length > 0) {
-    return `Failed to validate user: ${validationErrors}`;
+    return {
+      success: false,
+      message: `Failed to validate user: ${validationErrors}`,
+    };
   }
 
   let rows;
@@ -73,14 +102,14 @@ async function createUser(db, params) {
       ],
     );
   } catch (err) {
-    return `createUser failed: ${err.message}`;
+    return { success: false, message: `createUser failed: ${err.message}` };
   }
 
   if (rows.affectedRows && rows.affectedRows > 0) {
-    return `Created user with id: ${rows.insertId}`;
+    return { success: true, message: `Created user with id: ${rows.insertId}` };
   }
 
-  return 'Failed to create user';
+  return { success: false, message: 'Failed to create user' };
 }
 
 async function deleteUser(db, params) {
@@ -88,16 +117,22 @@ async function deleteUser(db, params) {
   try {
     [rows] = await db.execute('DELETE FROM users WHERE id = ?;', [params.id]);
   } catch (err) {
-    return `deleteUser failed: ${err.message}`;
+    return { success: false, message: `deleteUser failed: ${err.message}` };
   }
 
   if (rows?.affectedRows > 0) {
-    return `Deleted ${rows.affectedRows} record${
-      rows.affectedRows > 1 ? 's' : ''
-    } with id: ${params.id}`;
+    return {
+      success: true,
+      message: `Deleted ${rows.affectedRows} record${
+        rows.affectedRows > 1 ? 's' : ''
+      } with id: ${params.id}`,
+    };
   }
 
-  return `Unable to delete user with id ${params.id}`;
+  return {
+    success: false,
+    message: `Unable to delete user with id ${params.id}`,
+  };
 }
 
 async function updateUser(db, params) {
@@ -110,7 +145,10 @@ async function updateUser(db, params) {
   const validationErrors = await validateUpdates(schema, params.updates);
 
   if (validationErrors.length > 0) {
-    return `Unable to update user due to ${validationErrors}`;
+    return {
+      success: false,
+      message: `Unable to update user due to ${validationErrors}`,
+    };
   }
 
   // need to create string of form field1 = value1, field2 = value2
@@ -131,14 +169,17 @@ async function updateUser(db, params) {
       [...values, params.id],
     );
   } catch (err) {
-    return `updateUser failed: ${err.message}`;
+    return { success: false, message: `updateUser failed: ${err.message}` };
   }
 
   if (rows && rows.affectedRows > 0) {
-    return rows;
+    return { success: true, data: rows };
   }
 
-  return `Unable to update user with id ${params.id}`;
+  return {
+    success: false,
+    message: `Unable to update user with id ${params.id}`,
+  };
 }
 
 module.exports = {

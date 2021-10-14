@@ -23,9 +23,12 @@ middleware.forEach((m) => app.use(m));
 
 app.get('/', (req, res) => {
   res.json({
-    name: PROJECT_NAME,
-    version,
-    uptime: process.uptime(),
+    success: true,
+    data: {
+      name: PROJECT_NAME,
+      version,
+      uptime: process.uptime(),
+    },
   });
 });
 

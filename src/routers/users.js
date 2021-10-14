@@ -1,22 +1,27 @@
 const express = require('express');
 const routeHandler = require('../util/routeHandler');
-const { users } = require('../database');
+const TableInterface = require('../database/tableInterface');
+
+const usersRouter = express.Router({ mergeParams: true });
+
+const users = new TableInterface('users');
+
+users.routes.forEach((route) => {
+  switch (route.method) {
+    case 'GET':
+      usersRouter.route(route.path).get(routeHandler(users[route.function]));
+      break;
+    case 'POST':
+      usersRouter.route(route.path).post(routeHandler(users[route.function]));
+      break;
+    default:
+      break;
+  }
+});
 
 // initialize schema from db
 async function initializeUsers(database) {
   users.initialize(database);
 }
-
-const usersRouter = express.Router({ mergeParams: true });
-
-usersRouter.route('/').get(routeHandler(users.getUsers));
-
-usersRouter.route('/create').get(routeHandler(users.createUser));
-
-usersRouter.route('/:id').get(routeHandler(users.getUser));
-
-usersRouter.route('/:id/update').post(routeHandler(users.updateUser));
-
-usersRouter.route('/:id/delete').post(routeHandler(users.deleteUser));
 
 module.exports = { usersRouter, initializeUsers };

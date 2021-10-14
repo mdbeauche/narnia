@@ -23,20 +23,19 @@ module.exports = (modelFn) =>
 
       const results = await modelFn(req.app.db, params);
 
-      // log results
-      if (Array.isArray(results)) {
-        logger.log(
-          `${req.method} ${req.originalUrl} -> ${modelFn.name}:${JSON.stringify(
-            results[0],
-          )}\n... and [${results.length - 1}] more`,
-        );
-      } else {
-        logger.log(
-          `${req.method} ${req.originalUrl} -> ${
-            modelFn.name
-          }: ${JSON.stringify(results)}`,
-        );
+      let msg = `${req.method} ${req.originalUrl} -> ${modelFn.name} ${
+        results.success ? 'SUCCESS' : 'FAIL'
+      }:`;
+      if (results.data?.length > 0) {
+        msg += `${JSON.stringify(results.data[0])} and ${
+          results.data.length
+        } more.`;
       }
+      if (results.message !== undefined) {
+        msg += ` (${results.message})`;
+      }
+
+      logger.log(msg);
 
       return res.json(results);
     } catch (error) {
