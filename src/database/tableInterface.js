@@ -83,7 +83,7 @@ module.exports = class TableInterface {
       return { success: false, message: `getRecords failed: ${err.message}` };
     }
 
-    if (rows && rows.length) {
+    if (rows && Array.isArray(rows)) {
       return { success: true, data: rows };
     }
 

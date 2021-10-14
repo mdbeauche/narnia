@@ -1,3 +1,10 @@
+// *** ARCHIVED ***
+// previous usage:
+// const { usersRouter, initializeUsers } = require('./routers/users');
+// app.use('/users', usersRouter);
+// ... after database start:
+// await initializeUsers(database);
+
 const express = require('express');
 const routeHandler = require('../util/routeHandler');
 const TableInterface = require('../database/tableInterface');

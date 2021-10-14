@@ -9,6 +9,6 @@ Server responses are of the form:
 interface Response {
   success: boolean;
   message: String;
-  data: Array<any>;
+  data: Array<Object>;
 }
 ```

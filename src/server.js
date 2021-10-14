@@ -4,7 +4,7 @@ const mysql = require('mysql2/promise');
 const { PROJECT_NAME, PORT, DB_NAME, DB_HOST, DB_USER } = require('./config');
 const { version } = require('../package.json');
 const middleware = require('./util/middleware');
-const { usersRouter, initializeUsers } = require('./routers/users');
+const TableRouter = require('./routers/database');
 const logger = require('./util/logger');
 require('dotenv').config();
 
@@ -24,15 +24,15 @@ middleware.forEach((m) => app.use(m));
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    data: {
-      name: PROJECT_NAME,
-      version,
-      uptime: process.uptime(),
-    },
+    data: [
+      {
+        name: PROJECT_NAME,
+        version,
+        uptime: process.uptime(),
+      },
+    ],
   });
 });
-
-app.use('/users', usersRouter);
 
 // server application utilities
 function shutdown(signal) {
@@ -76,10 +76,28 @@ app.start = async () => {
     });
     app.db = database;
 
-    // need to initialize each table's schema after database is connected
-    await initializeUsers(database);
-
     logger.log(`Connected to database as id ${database.threadId}`);
+
+    // need to initialize each table's routes after database is connected
+    const showTables = await database.execute('SHOW TABLES;');
+    const tables = showTables[0]?.map((itm) => Object.values(itm).join());
+    app.get('/tables', (req, res) => {
+      res.json({
+        success: true,
+        data: tables,
+      });
+    });
+
+    for (const table of tables) {
+      const tableRouter = new TableRouter(table);
+
+      // eslint-disable-next-line no-await-in-loop
+      await tableRouter.initialize(database);
+
+      app.use(`/${table}`, tableRouter.tableRouter);
+    }
+
+    logger.log(`Tables available: ${tables.join(', ')}`);
 
     server = app.listen(PORT, () => {
       logger.log(`Server running on port ${PORT}`);
