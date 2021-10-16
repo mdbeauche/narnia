@@ -101,24 +101,44 @@ app.start = async () => {
 
     // need to initialize each table's routes after database is connected
     const showTables = await db.execute('SHOW TABLES;');
-    const tables = showTables[0]?.map((itm) => Object.values(itm).join());
+    const tableNames = showTables[0]?.map((itm) => Object.values(itm).join());
+    const initializeTables = [];
+
+    for (const table of tableNames) {
+      const tableRouter = new TableRouter(table);
+
+      initializeTables.push(
+        tableRouter
+          .initialize(db)
+          .then((count) => ({ count, table, router: tableRouter })),
+      );
+    }
+
+    const tables = await Promise.all(initializeTables);
+
+    tables.forEach(({ table, router }) => {
+      app.use(`/${table}`, router.tableRouter);
+    });
+
+    const message = tables
+      .reduce(
+        (prevMessage, { count, table }) =>
+          `${prevMessage}${table} [${count}], `,
+        '',
+      )
+      .slice(0, -2);
+
+    logger.log(`Tables available: ${message}`);
+
     app.get('/tables', (req, res) => {
       res.json({
         success: true,
-        data: tables,
+        data: tables.map((table) => ({
+          count: table.router.table.numRecords, // need current count
+          table: table.table,
+        })),
       });
     });
-
-    for (const table of tables) {
-      const tableRouter = new TableRouter(table);
-
-      // eslint-disable-next-line no-await-in-loop
-      await tableRouter.initialize(db);
-
-      app.use(`/${table}`, tableRouter.tableRouter);
-    }
-
-    logger.log(`Tables available: ${tables.join(', ')}`);
 
     server = app.listen(PORT, () => {
       logger.log(`Server running on port ${PORT}`);

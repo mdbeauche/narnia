@@ -30,6 +30,6 @@ module.exports = class TableRouter {
 
   // initialize schema from db
   async initialize(database) {
-    this.table.initialize(database);
+    return this.table.initialize(database);
   }
 };

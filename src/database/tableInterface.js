@@ -3,10 +3,12 @@ const {
   validateSchema,
   validateUpdates,
 } = require('./util/schema');
+const { PAGINATION_SIZE } = require('../config');
 
 module.exports = class TableInterface {
   constructor(name) {
     this.name = name || '';
+    this.numRecords = 0;
 
     this.routes = [
       {
@@ -15,8 +17,23 @@ module.exports = class TableInterface {
         method: 'GET',
       },
       {
+        path: '/data',
+        function: 'getData',
+        method: 'GET',
+      },
+      {
+        path: '/count',
+        function: 'getNumRecords',
+        method: 'GET',
+      },
+      {
         path: '/schema',
         function: 'getSchema',
+        method: 'GET',
+      },
+      {
+        path: '/all', // TODO: disable route
+        function: 'getAllRecords',
         method: 'GET',
       },
       {
@@ -42,7 +59,10 @@ module.exports = class TableInterface {
     ];
 
     this.initialize = this.initialize.bind(this);
+    this.getData = this.getData.bind(this);
+    this.getNumRecords = this.getNumRecords.bind(this);
     this.getSchema = this.getSchema.bind(this);
+    this.getAllRecords = this.getAllRecords.bind(this);
     this.validateRecord = this.validateRecord.bind(this);
     this.getRecords = this.getRecords.bind(this);
     this.getRecord = this.getRecord.bind(this);
@@ -53,6 +73,30 @@ module.exports = class TableInterface {
 
   async initialize(db) {
     this.schema = await initializeSchema(db, this.name);
+
+    const {
+      data: [count],
+    } = await this.getNumRecords(db);
+
+    this.numRecords = count;
+
+    return count;
+  }
+
+  async getNumRecords(db) {
+    try {
+      const [[{ count }]] = await db.execute(
+        `SELECT COUNT(*) AS count FROM ${this.name};`,
+      );
+      this.numRecords = count;
+
+      return { success: true, data: [count] };
+    } catch (err) {
+      return {
+        success: false,
+        message: `getNumRecords failed: ${err.message}`,
+      };
+    }
   }
 
   async getSchema() {
@@ -74,11 +118,34 @@ module.exports = class TableInterface {
     return validationErrors;
   }
 
-  async getRecords(db) {
+  async getAllRecords(db) {
     let rows;
 
     try {
       [rows] = await db.execute(`SELECT * FROM ${this.name}`);
+    } catch (err) {
+      return { success: false, message: `getRecords failed: ${err.message}` };
+    }
+
+    if (rows && Array.isArray(rows)) {
+      return { success: true, data: rows };
+    }
+
+    return { success: false, message: `No ${this.name} table found` };
+  }
+
+  async getRecords(db, params) {
+    let rows;
+
+    const { page = 0 } = params;
+
+    const offset = (page < 0 ? 0 : page) * PAGINATION_SIZE;
+
+    try {
+      [rows] = await db.execute(
+        `SELECT * FROM ${this.name} LIMIT ? OFFSET ?;`,
+        [PAGINATION_SIZE, offset],
+      );
     } catch (err) {
       return { success: false, message: `getRecords failed: ${err.message}` };
     }
@@ -105,6 +172,27 @@ module.exports = class TableInterface {
     }
 
     return { success: false, message: `No record found by id ${params.id}` };
+  }
+
+  async getData(db) {
+    // need to get current count
+    await this.getNumRecords();
+
+    let rows;
+
+    try {
+      [rows] = await db.execute(`SELECT * FROM ${this.name} LIMIT ?;`, [
+        PAGINATION_SIZE,
+      ]);
+    } catch (err) {
+      return { success: false, message: `getData failed: ${err.message}` };
+    }
+
+    if (rows && Array.isArray(rows)) {
+      return { success: true, data: [this.schema, this.numRecords, rows] };
+    }
+
+    return { success: false, message: 'Unknown getData failure' };
   }
 
   async createRecord(db, params) {
@@ -143,6 +231,8 @@ module.exports = class TableInterface {
     }
 
     if (rows?.affectedRows && rows.affectedRows > 0) {
+      this.numRecords -= rows.affectedRows;
+
       return {
         success: true,
         message: `Created record with id: ${rows.insertId}`,
@@ -163,6 +253,8 @@ module.exports = class TableInterface {
     }
 
     if (rows?.affectedRows > 0) {
+      this.numRecords -= rows.affectedRows;
+
       return {
         success: true,
         message: `Deleted ${rows.affectedRows} record${
