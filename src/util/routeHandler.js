@@ -23,16 +23,26 @@ module.exports = (modelFn) =>
 
       const results = await modelFn(req.app.db, params);
 
-      logger.log(results);
+      let msg = `${req.method} ${req.originalUrl} -> ${modelFn.name} ${
+        results.success ? 'SUCCESS' : 'FAIL'
+      }:`;
+      if (results.data?.length > 0) {
+        msg += `${JSON.stringify(results.data[0])} and ${
+          results.data.length
+        } more.`;
+      }
+      if (results.message !== undefined) {
+        msg += ` (${results.message})`;
+      }
+
+      logger.log(msg);
 
       return res.json(results);
     } catch (error) {
       logger.error(
-        `Route error at '${req.path}': ${error} (params: ${JSON.stringify(
-          params,
-          null,
-          2,
-        )})`,
+        `Route error at ${req.method} ${
+          req.originalUrl
+        } -> ${modelFn}: ${error} (params: ${JSON.stringify(params)})`,
       );
 
       return res.json(error);

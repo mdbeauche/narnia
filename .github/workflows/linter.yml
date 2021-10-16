@@ -60,7 +60,7 @@ jobs:
           # eslint config file location
           JAVASCRIPT_ES_CONFIG_FILE: .eslintrc.js
           # use prettier JS style
-          JAVASCRIPT_DEFAULT_STYLE: standard/prettier
+          JAVASCRIPT_DEFAULT_STYLE: prettier
           # lint only src folder
           FILTER_REGEX_INCLUDE: .*src/.*
           # only lint new or modified files

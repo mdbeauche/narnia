@@ -1,0 +1,34 @@
+// *** ARCHIVED ***
+// previous usage:
+// const { usersRouter, initializeUsers } = require('./routers/users');
+// app.use('/users', usersRouter);
+// ... after database start:
+// await initializeUsers(database);
+
+const express = require('express');
+const routeHandler = require('../util/routeHandler');
+const TableInterface = require('../database/tableInterface');
+
+const usersRouter = express.Router({ mergeParams: true });
+
+const users = new TableInterface('users');
+
+users.routes.forEach((route) => {
+  switch (route.method) {
+    case 'GET':
+      usersRouter.route(route.path).get(routeHandler(users[route.function]));
+      break;
+    case 'POST':
+      usersRouter.route(route.path).post(routeHandler(users[route.function]));
+      break;
+    default:
+      break;
+  }
+});
+
+// initialize schema from db
+async function initializeUsers(database) {
+  users.initialize(database);
+}
+
+module.exports = { usersRouter, initializeUsers };

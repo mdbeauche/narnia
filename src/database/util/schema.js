@@ -38,7 +38,7 @@ async function validateSchema(db, record, table, schema) {
       const err = validator.check(record[field], schema[field]);
 
       if (err) {
-        validationErrors.push(err.message);
+        validationErrors.push(`${field}: ${record[field]}: ${err.message}`);
       } else {
         // remove type from list of types to check
         types = types.filter((type) => type !== field);

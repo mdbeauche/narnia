@@ -1,3 +1,7 @@
 const server = require('./server');
 
-server.start();
+// server.start();
+
+(async () => {
+  await server.start();
+})();
