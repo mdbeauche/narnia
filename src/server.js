@@ -57,35 +57,28 @@ passport.use(
     async (email, password, done) => {
       const { user } = await auth.findUser(email);
 
-      console.log('USER INSIDE:', user);
-
       if (!user) {
         return done(null, false, { message: 'No user with that email.' });
       }
 
       const validate = await auth.validPassword({ user, password });
-      console.log('validate:', validate);
 
       if (!validate) {
         return done(null, false, { message: 'Incorrect password.' });
       }
 
+      logger.log(`Authenticated user: ${user.email} [${user.id}]`);
       return done(null, user);
     },
   ),
 );
 
 passport.serializeUser((user, done) => {
-  console.log(`serializing ${JSON.stringify(user)}`);
   done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
-  console.log('deserialize id:', id);
-
   const { user } = await auth.findUserById(id);
-
-  console.log('found user:', user);
 
   if (!user) {
     return done('Unable to deserialize user');
@@ -97,14 +90,10 @@ passport.deserializeUser(async (id, done) => {
 app.post('/login', passport.authenticate('local'), (req, res) => {
   // If this function gets called, authentication was successful.
   // `req.user` contains the authenticated user.
-  // req.user.username, req.user.id
-  console.log('INSIDE TEST INSIDE');
-
   res.json({
     success: true,
     data: [{ user: req.user }],
   });
-  // res.redirect('/');
 });
 
 app.get('/', (req, res) => {

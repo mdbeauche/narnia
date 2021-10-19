@@ -38,8 +38,6 @@ module.exports = class Auth {
   async findUserById(id) {
     let rows;
 
-    console.log('inside findUserById');
-
     try {
       [rows] = await this.db.execute(
         `SELECT * FROM ${this.name} WHERE id = ?`,
@@ -58,20 +56,14 @@ module.exports = class Auth {
 
   async validPassword({ user, password }) {
     // check password
-    console.log(`comparing ${password} with ${user.password}`);
-
     const result = await bcrypt.compare(password, user.password);
-
-    console.log('result:', result);
 
     if (result) {
       // passwords match
-      console.log('match');
       return true;
     }
 
     // passwords don't match
-    console.log('no match');
     return false;
   }
 };
