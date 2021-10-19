@@ -1,3 +1,4 @@
+const bcrypt = require('bcrypt');
 const {
   initializeSchema,
   validateSchema,
@@ -217,6 +218,12 @@ module.exports = class TableInterface {
     const values = `${Object.keys(params.record)
       .map(() => '?')
       .join(', ')}`;
+
+    if (params.record.password) {
+      // hash password before storing in db
+      const hash = await bcrypt.hash(params.record.password, 10);
+      params.record.password = hash;
+    }
 
     let rows;
     try {
