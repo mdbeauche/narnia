@@ -1,6 +1,15 @@
 const process = require('process');
 const express = require('express');
+const session = require('express-session');
+const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const Auth = require('./auth');
+const middleware = require('./util/middleware');
+const TableRouter = require('./routers/database');
+const logger = require('./util/logger');
+const { version } = require('../package.json');
 const {
   PROJECT_NAME,
   PORT,
@@ -9,10 +18,6 @@ const {
   DB_USER,
   CONNECTION_POOL_SIZE,
 } = require('./config');
-const { version } = require('../package.json');
-const middleware = require('./util/middleware');
-const TableRouter = require('./routers/database');
-const logger = require('./util/logger');
 require('dotenv').config();
 
 let server;
@@ -21,12 +26,75 @@ const app = express();
 
 app.use(
   express.urlencoded({
-    extended: true,
+    extended: false,
   }),
 );
 app.use(express.json());
+app.use(bodyParser.json());
 
 middleware.forEach((m) => app.use(m));
+
+// Auth
+const auth = new Auth();
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: true },
+  }),
+);
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(
+  new LocalStrategy(
+    {
+      usernameField: 'email',
+      passwordField: 'password',
+    },
+    async (email, password, done) => {
+      const { user } = await auth.findUser(email);
+
+      if (!user) {
+        return done(null, false, { message: 'No user with that email.' });
+      }
+
+      const validate = await auth.validPassword({ user, password });
+
+      if (!validate) {
+        return done(null, false, { message: 'Incorrect password.' });
+      }
+
+      logger.log(`Authenticated user: ${user.email} [${user.id}]`);
+      return done(null, user);
+    },
+  ),
+);
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  const { user } = await auth.findUserById(id);
+
+  if (!user) {
+    return done('Unable to deserialize user');
+  }
+
+  return done(null, user);
+});
+
+app.post('/login', passport.authenticate('local'), (req, res) => {
+  // If this function gets called, authentication was successful.
+  // `req.user` contains the authenticated user.
+  res.json({
+    success: true,
+    data: [{ user: req.user }],
+  });
+});
 
 app.get('/', (req, res) => {
   res.json({
@@ -99,6 +167,8 @@ app.start = async () => {
 
     logger.log(`Connected to database pool`);
 
+    auth.initialize(db);
+
     // need to initialize each table's routes after database is connected
     const showTables = await db.execute('SHOW TABLES;');
     const tableNames = showTables[0]?.map((itm) => Object.values(itm).join());
@@ -117,7 +187,7 @@ app.start = async () => {
     const tables = await Promise.all(initializeTables);
 
     tables.forEach(({ table, router }) => {
-      app.use(`/${table}`, router.tableRouter);
+      app.use(`/table/${table}`, router.tableRouter);
     });
 
     const message = tables
