@@ -26,11 +26,21 @@ module.exports = (modelFn) =>
       let msg = `${req.method} ${req.originalUrl} -> ${modelFn.name} ${
         results.success ? 'SUCCESS' : 'FAIL'
       }:`;
-      if (results.data?.length > 0) {
-        msg += `${JSON.stringify(results.data[0])} and ${
-          results.data.length
-        } more.`;
+
+      if (results.data?.length === 1) {
+        msg += `${JSON.stringify(results.data[0]).slice(0, 120)}`;
+      } else if (results.data?.length > 1) {
+        if (Array.isArray(results.data[0]) && results.data[0].length > 0) {
+          msg += `${JSON.stringify(results.data[0][0]).slice(0, 120)} and ${
+            results.data[0].length - 1
+          } more. [${results.data[results.data.length - 1]} total records]`;
+        } else {
+          msg += `${JSON.stringify(results.data[0]).slice(0, 120)} and ${
+            results.data.length - 1
+          } more. [${results.data[results.data.length - 1]} total records]`;
+        }
       }
+
       if (results.message !== undefined) {
         msg += ` (${results.message})`;
       }

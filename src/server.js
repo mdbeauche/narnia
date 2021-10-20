@@ -92,7 +92,7 @@ app.post('/login', passport.authenticate('local'), (req, res) => {
   // `req.user` contains the authenticated user.
   res.json({
     success: true,
-    data: [{ user: req.user }],
+    data: [req.user],
   });
 });
 

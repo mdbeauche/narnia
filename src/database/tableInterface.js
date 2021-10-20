@@ -33,6 +33,11 @@ module.exports = class TableInterface {
         method: 'GET',
       },
       {
+        path: '/order',
+        function: 'getOrder',
+        method: 'GET',
+      },
+      {
         path: '/all', // TODO: disable route
         function: 'getAllRecords',
         method: 'GET',
@@ -63,6 +68,7 @@ module.exports = class TableInterface {
     this.getData = this.getData.bind(this);
     this.getNumRecords = this.getNumRecords.bind(this);
     this.getSchema = this.getSchema.bind(this);
+    this.getOrder = this.getOrder.bind(this);
     this.getAllRecords = this.getAllRecords.bind(this);
     this.validateRecord = this.validateRecord.bind(this);
     this.getRecords = this.getRecords.bind(this);
@@ -152,7 +158,7 @@ module.exports = class TableInterface {
     }
 
     if (rows && Array.isArray(rows)) {
-      return { success: true, data: rows };
+      return { success: true, data: [rows, this.numRecords] };
     }
 
     return { success: false, message: `No ${this.name} table found` };
@@ -175,6 +181,66 @@ module.exports = class TableInterface {
     return { success: false, message: `No record found by id ${params.id}` };
   }
 
+  async getOrder(db, params) {
+    let rows;
+
+    const { orders, page = 0 } = params;
+
+    const offset = (page < 0 ? 0 : page) * PAGINATION_SIZE;
+    // [ { field: string, ascending: boolean }, ]
+    // ? ASC|DESC, ? ASC|DESC;    ... [field1, field2]
+
+    let orderString = '';
+    let fieldNotFound = null;
+
+    orders.forEach((order) => {
+      const parsedOrder = JSON.parse(order);
+
+      // only allow searching for fields that exist in schema
+      // (SQL does not allow the ? variable escaping for column names in ORDER BY)
+      if (
+        Object.prototype.hasOwnProperty.call(this.schema, parsedOrder.field) ||
+        parsedOrder.field === 'id' ||
+        parsedOrder.field === 'created_at' ||
+        parsedOrder.field === 'updated_at'
+      ) {
+        const ascending = Object.prototype.hasOwnProperty.call(
+          parsedOrder,
+          'ascending',
+        )
+          ? ` ${parsedOrder.ascending === true ? 'ASC' : 'DESC'}`
+          : '';
+        orderString += `${parsedOrder.field}${ascending}, `;
+      } else {
+        fieldNotFound = parsedOrder.field;
+      }
+    });
+
+    if (fieldNotFound) {
+      return {
+        success: false,
+        message: `getOrder failed: field ${fieldNotFound} does not exist in table ${this.name}`,
+      };
+    }
+
+    orderString = orderString.slice(0, -2);
+
+    try {
+      [rows] = await db.execute(
+        `SELECT * FROM ${this.name} ORDER BY ${orderString} LIMIT ? OFFSET ?;`,
+        [PAGINATION_SIZE, offset],
+      );
+    } catch (err) {
+      return { success: false, message: `getOrder failed: ${err.message}` };
+    }
+
+    if (rows && Array.isArray(rows)) {
+      return { success: true, data: [rows, this.numRecords] };
+    }
+
+    return { success: false, message: `No ${this.name} table found` };
+  }
+
   async getData(db) {
     // need to get current count
     await this.getNumRecords();
@@ -190,7 +256,7 @@ module.exports = class TableInterface {
     }
 
     if (rows && Array.isArray(rows)) {
-      return { success: true, data: [this.schema, this.numRecords, rows] };
+      return { success: true, data: [this.schema, rows, this.numRecords] };
     }
 
     return { success: false, message: 'Unknown getData failure' };
@@ -238,7 +304,7 @@ module.exports = class TableInterface {
     }
 
     if (rows?.affectedRows && rows.affectedRows > 0) {
-      this.numRecords -= rows.affectedRows;
+      this.numRecords += rows.affectedRows;
 
       return {
         success: true,
