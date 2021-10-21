@@ -34,7 +34,12 @@ module.exports = class TableInterface {
       },
       {
         path: '/order',
-        function: 'getOrder',
+        function: 'getOrderedRecords',
+        method: 'GET',
+      },
+      {
+        path: '/query',
+        function: 'getRecordsByQuery',
         method: 'GET',
       },
       {
@@ -73,7 +78,8 @@ module.exports = class TableInterface {
     this.getData = this.getData.bind(this);
     this.getNumRecords = this.getNumRecords.bind(this);
     this.getSchema = this.getSchema.bind(this);
-    this.getOrder = this.getOrder.bind(this);
+    this.getOrderedRecords = this.getOrderedRecords.bind(this);
+    this.getRecordsByQuery = this.getRecordsByQuery.bind(this);
     this.getAllRecords = this.getAllRecords.bind(this);
     this.validateRecord = this.validateRecord.bind(this);
     this.getRecords = this.getRecords.bind(this);
@@ -210,7 +216,7 @@ module.exports = class TableInterface {
     return { success: false, message: `No record found by id ${params.id}` };
   }
 
-  async getOrder(db, params) {
+  async getOrderedRecords(db, params) {
     let rows;
 
     const { orders, page = 0 } = params;
@@ -248,7 +254,8 @@ module.exports = class TableInterface {
     if (fieldNotFound) {
       return {
         success: false,
-        message: `getOrder failed: field ${fieldNotFound} does not exist in table ${this.name}`,
+        // eslint-disable-next-line max-len
+        message: `getOrderedRecords failed: field ${fieldNotFound} does not exist in table ${this.name}`,
       };
     }
 
@@ -260,7 +267,43 @@ module.exports = class TableInterface {
         [PAGINATION_SIZE, offset],
       );
     } catch (err) {
-      return { success: false, message: `getOrder failed: ${err.message}` };
+      return {
+        success: false,
+        message: `getOrderedRecords failed: ${err.message}`,
+      };
+    }
+
+    if (rows && Array.isArray(rows)) {
+      return { success: true, data: [rows, this.numRecords] };
+    }
+
+    return { success: false, message: `No ${this.name} table found` };
+  }
+
+  async getRecordsByQuery(db, params) {
+    let rows;
+
+    const { query, page = 0 } = params;
+
+    const parsedQuery = JSON.parse(query);
+
+    const offset = (page < 0 ? 0 : page) * PAGINATION_SIZE;
+    // { column: string, value: string }
+
+    // SELECT * FROM Customers
+    // WHERE CustomerID=1;
+
+    try {
+      [rows] = await db.execute(
+        // eslint-disable-next-line max-len
+        `SELECT * FROM ${this.name} WHERE ${parsedQuery.column}=? ORDER BY created_at DESC LIMIT ? OFFSET ?;`,
+        [parsedQuery.value, PAGINATION_SIZE, offset],
+      );
+    } catch (err) {
+      return {
+        success: false,
+        message: `getRecordsByQuery failed: ${err.message}`,
+      };
     }
 
     if (rows && Array.isArray(rows)) {
