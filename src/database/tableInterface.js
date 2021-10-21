@@ -49,16 +49,21 @@ module.exports = class TableInterface {
       },
       {
         path: '/:id',
-        function: 'getRecord',
+        function: 'getRecordById',
         method: 'GET',
       },
       {
-        path: '/:id/update',
+        path: '/find/:id',
+        function: 'getRecordsById',
+        method: 'GET',
+      },
+      {
+        path: '/update/:id',
         function: 'updateRecord',
         method: 'POST',
       },
       {
-        path: '/:id/delete',
+        path: '/delete/:id',
         function: 'deleteRecord',
         method: 'POST',
       },
@@ -72,7 +77,8 @@ module.exports = class TableInterface {
     this.getAllRecords = this.getAllRecords.bind(this);
     this.validateRecord = this.validateRecord.bind(this);
     this.getRecords = this.getRecords.bind(this);
-    this.getRecord = this.getRecord.bind(this);
+    this.getRecordById = this.getRecordById.bind(this);
+    this.getRecordsById = this.getRecordsById.bind(this);
     this.createRecord = this.createRecord.bind(this);
     this.updateRecord = this.updateRecord.bind(this);
     this.deleteRecord = this.deleteRecord.bind(this);
@@ -145,7 +151,6 @@ module.exports = class TableInterface {
     let rows;
 
     const { page = 0 } = params;
-
     const offset = (page < 0 ? 0 : page) * PAGINATION_SIZE;
 
     try {
@@ -164,12 +169,36 @@ module.exports = class TableInterface {
     return { success: false, message: `No ${this.name} table found` };
   }
 
-  async getRecord(db, params) {
+  async getRecordById(db, params) {
     let rows;
+
     try {
-      [rows] = await db.execute(`SELECT * FROM ${this.name} WHERE id = ?`, [
-        params.id,
-      ]);
+      [rows] = await db.execute(
+        `SELECT * FROM ${this.name} WHERE id = ? LIMIT 1`,
+        [params.id],
+      );
+    } catch (err) {
+      return { success: false, message: `getRecord failed: ${err.message}` };
+    }
+
+    if (rows && rows.length) {
+      return { success: true, data: rows };
+    }
+
+    return { success: false, message: `No record found by id ${params.id}` };
+  }
+
+  async getRecordsById(db, params) {
+    let rows;
+
+    const { page = 0 } = params;
+    const offset = (page < 0 ? 0 : page) * PAGINATION_SIZE;
+
+    try {
+      [rows] = await db.execute(
+        `SELECT * FROM ${this.name} WHERE id = ? LIMIT ? OFFSET ?`,
+        [params.id, PAGINATION_SIZE, offset],
+      );
     } catch (err) {
       return { success: false, message: `getRecord failed: ${err.message}` };
     }
